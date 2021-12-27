@@ -28,6 +28,7 @@
 #include "FileFormats/CSTFile.h"
 #include "FileFormats/FZFile.h"
 #include "FileFormats/GenCADFile.h"
+#include "FileFormats/LAYFile.h"
 #include "annotations.h"
 #include "imgui/imgui.h"
 #include "imgui/misc/cpp/imgui_stdlib.h"
@@ -460,6 +461,8 @@ int BoardView::LoadFile(const filesystem::path &filepath) {
 				m_file = new BVRFile(buffer);
 			else if (BVR3File::verifyFormat(buffer))
 				m_file = new BVR3File(buffer);
+			else if (LAYFile::verifyFormat(buffer))
+				m_file = new LAYFile(buffer);
 			else
 				m_error_msg = "Unrecognized file format.";
 
