@@ -28,6 +28,7 @@
 #include "FileFormats/CSTFile.h"
 #include "FileFormats/FZFile.h"
 #include "FileFormats/GenCADFile.h"
+#include "FileFormats/LAYFile.h"
 #include "FileFormats/XZZPCBFile.h"
 #include "GUI/DPI.h"
 #include "GUI/Fonts.h"
@@ -138,6 +139,8 @@ int BoardView::LoadFile(const filesystem::path &filepath) {
 				m_file = new BVR3File(buffer);
 			else if (BRDAllegroFile::verifyFormat(buffer))
 				m_file = new BRDAllegroFile(buffer);
+			else if (LAYFile::verifyFormat(buffer))
+				m_file = new LAYFile(buffer);
 			else if (XZZPCBFile::verifyFormat(buffer))
 				m_file = new XZZPCBFile(buffer, config.XZZPCBKey);
 			else
