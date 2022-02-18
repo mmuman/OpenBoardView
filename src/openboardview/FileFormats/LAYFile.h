@@ -16,6 +16,7 @@ struct LAYFile : public BRDFile {
 	void gen_outline();
 	void update_counts();
 
+	uint32_t num_connections;
 	std::vector <int> objects;
 
 	/* used to reconstruct a usable outline from unordered polylines and arcs */
