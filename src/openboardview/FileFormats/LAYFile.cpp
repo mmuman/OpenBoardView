@@ -217,7 +217,7 @@ LAYFile::LAYFile(std::vector<char> &buf) {
 	}
 
 	for (uint32_t b = 0; b < 1/*boards*/; b++) {
-		uint32_t num_connections = 0; // TODO: count connections
+		num_connections = 0;
 
 		/* read board header */
 
@@ -263,14 +263,12 @@ LAYFile::LAYFile(std::vector<char> &buf) {
 		}
 
 		// Add dummy parts for orphan pins on both sides
-#if 0
 		BRDPart part;
 		part.name          = "...";
 		part.mounting_side = BRDPartMountingSide::Both; // FIXME: Both sides?
 		part.part_type     = BRDPartType::ThroughHole;
 		part.end_of_pins   = 0; // Unused
 		parts.push_back(part);
-#endif
 
 		// generate outline from the segments we collected out of order so far
 		outline_order_segments(format);
@@ -285,10 +283,15 @@ LAYFile::LAYFile(std::vector<char> &buf) {
 			format.push_back({0, 0});
 		}
 
-		/* TODO: read connections */
+		/* TODO: handle connections (but most boards don't have them filled anyway) */
+		fprintf(stderr, "Reading %d connections:\n", num_connections);
 		for (uint32_t connection = 0; connection < num_connections; connection++) {
 			uint32_t len = read_uint32(p);
-			p += len * 4;
+			fprintf(stderr, "Connection %d: %d to read:\n", connection, len);
+			for (uint32_t c = 0; c < len; c++) {
+				uint32_t conn = read_uint32(p);
+				fprintf(stderr, "\t0x%08x %d\n", conn, conn);
+			}
 		}
 	}
 
@@ -302,7 +305,6 @@ LAYFile::LAYFile(std::vector<char> &buf) {
 	fprintf(stderr, "Project company: '%s'\n", s.c_str());
 	s = read_hugestring(p);
 	fprintf(stderr, "Comment: '%s'\n", s.c_str());
-
 
 	update_counts(); // FIXME: useless?
 
@@ -374,13 +376,14 @@ bool LAYFile::ReadObject(const char *&p, const char *file_buf, bool isTextChild,
 		case OBJ_THT_PAD:
 		case OBJ_SMD_PAD:
 		{
-			//num_connections++;
+			num_connections++;
 			BRDPin pin;
 
 			pin.part = component_id + 1;
 			pin.probe = 0;
 			fprintf(stderr, "PIN: MARKER: '%s'\n", marker.c_str());
 			pin.net = strdup(marker.c_str()); //XXX:LEAK
+
 			// TODO: check for tht_shape
 			pin.radius = (r_in + r_out) / (2 * 10000);
 			pin.pos.x = (int)origin_x;
