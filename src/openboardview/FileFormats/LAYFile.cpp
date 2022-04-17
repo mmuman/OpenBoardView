@@ -82,7 +82,7 @@ std::string read_string(const char *&p, int size) {
 // Text object uses Pascal strings but with uint32 length prefix and no preallocated size.
 std::string read_hugestring(const char *&p) {
 	uint32_t l = read_uint32(p);
-	ENSURE(l < 10000);
+	//ENSURE(l < 10000, );
 	// something probably went wrong
 	if(l > 10000)
 		return std::string("");
@@ -200,9 +200,9 @@ LAYFile::LAYFile(std::vector<char> &buf) {
 	std::string s;
 
 	// XXX: use buf.data() ?
-	ENSURE(buffer_size > 4);
+	ENSURE_OR_FAIL(buffer_size > 4, error_msg, return);
 	file_buf             = (char *)calloc(1, buffer_size);
-	ENSURE(file_buf != nullptr);
+	ENSURE_OR_FAIL(file_buf != nullptr, error_msg, return);
 
 	std::copy(buf.begin(), buf.end(), file_buf);
 
@@ -221,7 +221,7 @@ LAYFile::LAYFile(std::vector<char> &buf) {
 
 		/* read board header */
 
-		ENSURE(p - file_buf + 534 < buffer_size);
+		ENSURE_OR_FAIL(p - file_buf + 534 < buffer_size, error_msg, return);
 		s = read_string(p, 30);
 		// unknown padding
 		read_uint32(p);
@@ -429,9 +429,7 @@ bool LAYFile::ReadObject(const char *&p, const char *file_buf, bool isTextChild,
 			fprintf(stderr, "%.*s@ 0x%lx Reading %d sub-objects\n", indent, TABSTABS, p - file_buf, count);
 			for (uint32_t i = 0; i < count; i++) {
 				fprintf(stderr, "%.*s@ 0x%lx Reading sub-object %d of %d\n", indent, TABSTABS, p - file_buf, i+1, count);
-				ENSURE(count < 1000); //XXX
-				if (count > 1000)
-					return false;
+				ENSURE_OR_FAIL(count < 1000, error_msg, return false); //XXX
 				ReadObject(p, file_buf, true, indent + 1);
 			}
 			if (tht_shape == 1) {
@@ -450,8 +448,8 @@ bool LAYFile::ReadObject(const char *&p, const char *file_buf, bool isTextChild,
 				fprintf(stderr, "%.*s@ 0x%lx %d use: '%d'\n", indent, TABSTABS, p - file_buf, use);
 
 				// we shouldn't have component_id == 0 here
-				ENSURE(component_id);
-				ENSURE(part);
+				ENSURE(component_id, error_msg);
+				ENSURE(part, error_msg);
 				if (part) {
 					if (text.size())
 						part->name = strdup(text.c_str()); // XXX:LEAK
@@ -459,8 +457,8 @@ bool LAYFile::ReadObject(const char *&p, const char *file_buf, bool isTextChild,
 				}
 			}
 			if (tht_shape == 2) { // that's the component value field
-				ENSURE(component_id);
-				ENSURE(part);
+				ENSURE(component_id, error_msg);
+				ENSURE(part, error_msg);
 				if (part) {
 					if (text.size())
 						part->mfgcode = text.c_str();
@@ -499,8 +497,8 @@ bool LAYFile::ReadObject(const char *&p, const char *file_buf, bool isTextChild,
 		outline_segments.push_back(segments);
 	}
 	if (part) {
-		ENSURE(component_id);
-		ENSURE(part);
+		ENSURE(component_id, error_msg);
+		ENSURE(part, error_msg);
 		if (part->p1.x == 0 && part->p1.y == 0 && part->p2.x == 0 && part->p2.y == 0) {
 			fprintf(stderr, "INIT p1 p2\n");
 			part->p1 = {min_x, min_y};
