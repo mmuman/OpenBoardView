@@ -1,12 +1,9 @@
 #pragma once
 
-#include "BRDFile.h"
+#include "BRDFileBase.h"
 
-struct LAYFile : public BRDFile {
+struct LAYFile : public BRDFileBase {
 	LAYFile(std::vector<char> &buf);
-	~LAYFile() {
-		free(file_buf);
-	}
 
 	bool ReadObject(const char *&p, const char *file_buf, bool isTextChild = false, int indent = 0);
 	void outline_order_segments(std::vector<BRDPoint> &format);
